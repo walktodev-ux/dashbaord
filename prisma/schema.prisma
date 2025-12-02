@@ -3,12 +3,10 @@ generator client {
   engineType = "library"
 }
 
-
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
-  
 }
 
 model User {
@@ -17,8 +15,8 @@ model User {
   name           String?
   givenName      String?
   familyName     String?
-  image           String? 
-  emailVerified   DateTime? 
+  image          String?
+  emailVerified  DateTime?
   birthDate      DateTime?
   city           String?
   specialization String?
@@ -34,6 +32,8 @@ model User {
   accounts       Account[]
   sessions       Session[]
   googleCalendar GoogleCalendarIntegration?
+  todos          Todo[]
+  tags           Tag[]
   createdAt      DateTime                   @default(now())
   updatedAt      DateTime                   @updatedAt
 }
@@ -113,15 +113,15 @@ enum ApptStatus {
 }
 
 model WaitlistItem {
-  id          String   @id @default(cuid())
-  name        String
-  email       String?   @db.VarChar(191)
-  phone       String?   @db.VarChar(32)
-  note        String?
-  status      WaitlistStatus @default(PENDING)
-   userId    String  
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  id        String         @id @default(cuid())
+  name      String
+  email     String?        @db.VarChar(191)
+  phone     String?        @db.VarChar(32)
+  note      String?
+  status    WaitlistStatus @default(PENDING)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
 }
 
 enum WaitlistStatus {
@@ -130,6 +130,7 @@ enum WaitlistStatus {
   CONVERTED
   DROPPED
 }
+
 model GoogleCalendarIntegration {
   id                String    @id @default(cuid())
   userId            String    @unique
@@ -152,7 +153,7 @@ model Account {
   access_token       String? @db.LongText
   expires_at         Int?
   token_type         String?
-  scope              String? @db.Text 
+  scope              String? @db.Text
   id_token           String? @db.LongText
   session_state      String?
   oauth_token_secret String? @db.Text
@@ -175,4 +176,51 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum Recurrence {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+model Todo {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  title String
+  note  String?
+  done  Boolean   @default(false)
+  due   DateTime?
+
+  recurrence Recurrence @default(NONE)
+
+  googleId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tags TodoTag[]
+}
+
+model Tag {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  name String
+
+  todos TodoTag[]
+}
+
+model TodoTag {
+  todoId String
+  tagId  String
+
+  todo Todo @relation(fields: [todoId], references: [id])
+  tag  Tag  @relation(fields: [tagId], references: [id])
+
+  @@id([todoId, tagId])
 }

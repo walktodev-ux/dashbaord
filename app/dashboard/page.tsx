@@ -18,8 +18,9 @@ import {
   Mail,
 } from "lucide-react";
 
-import SessionsPanel from "@/components/SessionsPanel";
+
 import CalendarSection from "@/components/CalendarSection";
+import TodoWidget from "@/components/TodoWidget";
 
 export const dynamic = "force-dynamic";
 
@@ -162,60 +163,9 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      {/* KPI */}
-      {/* <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Kpi
-          title="Активних клієнтів"
-          value={activeClients}
-          hint="в роботі"
-          tint="blue"
-          icon={<Users className="size-5" />}
-        />
-        <Kpi
-          title="Сесій цього тижня"
-          value={sessionsThisWeek}
-          hint="+2 від минулого"
-          tint="green"
-          icon={<CalendarDays className="size-5" />}
-        />
-        <Kpi
-          title="Сьогодні сесій"
-          value={sessionsToday}
-          hint="заплановано"
-          tint="pink"
-          icon={<Clock className="size-5" />}
-        />
-        <Kpi
-          title="Лист очікування"
-          value={waitlist.length}
-          hint={`потенційних: ${waitlistPending}`}
-          tint="amber"
-          icon={<Users className="size-5" />}
-        />
-      </section> */}
 
-      {/* Дві колонки: Сесії на сьогодні / Лист очікування */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Сесії на сьогодні */}
-        {/* <Card className="p-5 "> */}
-        {/* <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="inline-flex items-center justify-center rounded-xl p-2 ring-1 bg-violet-50 text-violet-700 ring-violet-100">
-                <CalendarDays className="size-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-slate-600">Сесії на сьогодні</h2>
-                <div className="text-sm text-slate-500">Заплановані зустрічі</div>
-              </div>
-            </div>
-          </div> */}
 
-        {/* <SessionsPanel
-            events={events as any}
-            nowIso={now.toISOString()}
-            title="Сесії"
-          />
-        </Card> */}
 
         {/* Сесії на сьогодні */}
         <Card className="p-5">
@@ -280,100 +230,9 @@ export default async function DashboardPage() {
           </ul>
         </Card>
 
-        {/* Лист очікування */}
+        {/* TO DO*/}
         <Card className="p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="inline-flex items-center justify-center rounded-xl p-2 ring-1 bg-amber-50 text-amber-700 ring-amber-100">
-                <Users className="size-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-slate-600">Лист очікування</h2>
-                <div className="text-sm text-slate-500">Потенційні клієнти</div>
-              </div>
-            </div>
-
-
-            <form action="/api/waitlist" method="post" className="md:hidden">
-              <button type="submit" className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm hover:bg-slate-50">
-                <Plus className="size-4" /> Додати
-              </button>
-            </form>
-          </div>
-
-          <ul className="space-y-3">
-            {waitlist.map((w) => (
-              <li key={w.id} className="rounded-xl border border-slate-200 bg-white p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="font-medium">{w.name}</div>
-                    <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                      {w.phone ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Phone className="size-4" /> {w.phone}
-                        </span>
-                      ) : null}
-                      {w.email ? (
-                        <span className="inline-flex items-center gap-1">
-                          <Mail className="size-4" /> {w.email}
-                        </span>
-                      ) : null}
-                      <span className="text-slate-400">
-                        Додано: {new Date(w.createdAt).toLocaleDateString("uk-UA")}
-                      </span>
-                    </div>
-                    {w.note ? <p className="mt-2 text-sm text-slate-600">{w.note}</p> : null}
-                  </div>
-
-                  {/* Статус + дії */}
-                  <form action={`/api/waitlist/${w.id}`} method="post" className="flex items-center gap-2">
-                    <select
-                      name="status"
-                      defaultValue={w.status}
-                      className="border rounded-md px-2 py-1 text-sm"
-                    >
-                      <option value="PENDING">Очікує</option>
-                      <option value="CONTACTED">Звʼязались</option>
-                      <option value="CONVERTED">Записали</option>
-                      <option value="DROPPED">Відмова</option>
-                    </select>
-                    <input type="hidden" name="_method" value="PATCH" />
-                    <button type="submit" className="rounded-md border px-3 py-1 text-sm hover:bg-slate-50">
-                      Зберегти
-                    </button>
-                  </form>
-                </div>
-
-                {/* Нотатка */}
-                <form action={`/api/waitlist/${w.id}`} method="post" className="mt-3 flex items-center gap-2">
-                  <input
-                    name="note"
-                    defaultValue={w.note ?? ""}
-                    placeholder="Нотатка"
-                    className="flex-1 border rounded-md px-3 py-2 text-sm"
-                  />
-                  <input type="hidden" name="_method" value="PATCH" />
-                  <button type="submit" className="rounded-md border px-3 py-1 text-sm hover:bg-slate-50">
-                    Зберегти нотатку
-                  </button>
-                </form>
-
-                {/* Видалення */}
-                <form action={`/api/waitlist/${w.id}`} method="post" className="mt-2">
-                  <input type="hidden" name="_method" value="DELETE" />
-                  <button className="rounded-md border px-3 py-1 text-sm text-rose-700 hover:bg-rose-50">
-                    Видалити
-                  </button>
-                </form>
-              </li>
-            ))}
-
-            {waitlist.length === 0 && (
-              <li className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-slate-500">
-                Лист очікування порожній.
-              </li>
-            )}
-          </ul>
+          <TodoWidget />
         </Card>
       </section>
 
