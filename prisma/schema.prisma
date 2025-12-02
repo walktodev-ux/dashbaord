@@ -1,0 +1,178 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  
+}
+
+model User {
+  id             String                     @id @default(cuid())
+  email          String                     @unique
+  name           String?
+  givenName      String?
+  familyName     String?
+  image           String? 
+  emailVerified   DateTime? 
+  birthDate      DateTime?
+  city           String?
+  specialization String?
+  method         String?
+  about          String?
+  avatarUrl      String?
+  currency       String?                    @default("UAH")
+  workHours      WorkHours?
+  pricingTiers   PricingTier[]
+  clients        Client[]                   @relation("TherapistClients")
+  appointments   Appointment[]              @relation("TherapistAppointments")
+  waitlist       WaitlistItem[]
+  accounts       Account[]
+  sessions       Session[]
+  googleCalendar GoogleCalendarIntegration?
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+}
+
+model WorkHours {
+  id       String  @id @default(cuid())
+  userId   String  @unique
+  user     User    @relation(fields: [userId], references: [id])
+  startMin Int     @default(540)
+  endMin   Int     @default(1080)
+  mon      Boolean @default(true)
+  tue      Boolean @default(true)
+  wed      Boolean @default(true)
+  thu      Boolean @default(true)
+  fri      Boolean @default(true)
+  sat      Boolean @default(false)
+  sun      Boolean @default(false)
+  timezone String  @default("Europe/Kyiv")
+}
+
+model PricingTier {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  label        String
+  minutes      Int
+  price        Int // зберігаємо у копійках UAH
+  isActive     Boolean       @default(true)
+  // зворотній зв'язок до Appointment.pricingTier
+  appointments Appointment[]
+}
+
+model Client {
+  id            String        @id @default(cuid())
+  therapistId   String
+  therapist     User          @relation("TherapistClients", fields: [therapistId], references: [id])
+  email         String?
+  name          String?
+  phone         String?
+  status        ClientStatus  @default(ACTIVE)
+  tags          Json? // <-- було String[] @db.Json, замінили на Json?
+  lastSessionAt DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  appointments  Appointment[] @relation("ClientAppointments")
+}
+
+enum ClientStatus {
+  ACTIVE
+  PAUSED
+  DONE
+}
+
+model Appointment {
+  id            String       @id @default(cuid())
+  therapistId   String
+  therapist     User         @relation("TherapistAppointments", fields: [therapistId], references: [id])
+  clientId      String?
+  client        Client?      @relation("ClientAppointments", fields: [clientId], references: [id])
+  startsAt      DateTime
+  endsAt        DateTime
+  location      String?
+  pricingTierId String?
+  pricingTier   PricingTier? @relation(fields: [pricingTierId], references: [id])
+  googleEventId String?
+  status        ApptStatus   @default(SCHEDULED)
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+enum ApptStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELED
+  NOSHOW
+}
+
+model WaitlistItem {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?   @db.VarChar(191)
+  phone       String?   @db.VarChar(32)
+  note        String?
+  status      WaitlistStatus @default(PENDING)
+   userId    String  
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+enum WaitlistStatus {
+  PENDING
+  CONTACTED
+  CONVERTED
+  DROPPED
+}
+model GoogleCalendarIntegration {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id])
+  calendarId        String
+  syncToken         String?
+  resourceId        String?
+  channelId         String?
+  channelExpiration DateTime?
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  user               User    @relation(fields: [userId], references: [id])
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.LongText
+  access_token       String? @db.LongText
+  expires_at         Int?
+  token_type         String?
+  scope              String? @db.Text 
+  id_token           String? @db.LongText
+  session_state      String?
+  oauth_token_secret String? @db.Text
+  oauth_token        String? @db.Text
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  expires      DateTime
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
