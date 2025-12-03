@@ -52,11 +52,17 @@ export default function TodoWidget() {
 
     async function loadTodos() {
         setLoading(true);
+
+
+        await fetch("/api/tasks/sync");
+
         const res = await fetch("/api/tasks");
         const data = await res.json();
         setTodos(data);
+
         setLoading(false);
     }
+
 
     async function loadTags() {
         try {
